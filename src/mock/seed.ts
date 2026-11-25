@@ -176,11 +176,23 @@ export function generarDatos(): Record<string, Fila[]> {
     }
   })
 
-  const BENEFICIOS = [
-    'Bolsón alimentario', 'Subsidio de alquiler', 'Medicamentos', 'Kit escolar',
-    'Materiales de construcción', 'Pensión municipal', 'Capacitación laboral', 'Transporte social',
+  // Programas y beneficios genéricos (ninguno corresponde a un programa real).
+  const BENEFICIOS: [string, string, string, string, string][] = [
+    ['Bolsón alimentario', 'Entrega mensual de alimentos no perecederos.', 'ayuda_emergencia', 'municipal', 'activo'],
+    ['Subsidio de alquiler', 'Aporte económico para el pago de un alquiler.', 'vivienda_infraestructura', 'provincial', 'activo'],
+    ['Medicamentos', 'Cobertura de medicación de uso crónico.', 'ayuda_emergencia', 'provincial', 'activo'],
+    ['Kit escolar', 'Útiles y guardapolvo al inicio del ciclo lectivo.', 'becas_estudios', 'municipal', 'activo'],
+    ['Materiales de construcción', 'Chapas, aberturas y materiales para refacciones.', 'vivienda_infraestructura', 'municipal', 'pausado'],
+    ['Pensión municipal', 'Ayuda económica mensual para personas en situación vulnerable.', 'pensiones_jubilaciones', 'municipal', 'activo'],
+    ['Capacitación laboral', 'Cursos de oficios con certificación.', 'empleo_capacitacion', 'provincial', 'activo'],
+    ['Transporte social', 'Pasajes sin costo para trámites y atención médica.', 'otros', 'municipal', 'activo'],
+    ['Asignación por hijo (ejemplo)', 'Prestación mensual por cada hijo a cargo.', 'asignaciones_familiares', 'nacional', 'activo'],
+    ['Beca de estudios (ejemplo)', 'Apoyo económico para estudiantes de nivel medio y superior.', 'becas_estudios', 'nacional', 'activo'],
+    ['Jubilación mínima (ejemplo)', 'Haber mínimo para personas jubiladas.', 'pensiones_jubilaciones', 'nacional', 'activo'],
   ]
-  const beneficios: Fila[] = BENEFICIOS.map((nombrebeneficio, i) => ({ id: i + 1, nombrebeneficio }))
+  const beneficios: Fila[] = BENEFICIOS.map(([nombrebeneficio, descripcionCorta, categoria, tipo, estado], i) => ({
+    id: i + 1, nombrebeneficio, descripcionCorta, categoria, tipo, estado,
+  }))
 
   const OCUPACIONES = ['Albañil', 'Docente', 'Empleada doméstica', 'Changarín', 'Comerciante', 'Jubilada', 'Estudiante', 'Desempleado', 'Cuidadora', 'Costurera']
   const OBRAS = ['PAMI', 'OSEP', 'Sin obra social', 'Obra social ficticia A', 'Obra social ficticia B']
