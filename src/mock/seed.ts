@@ -95,19 +95,77 @@ export function generarDatos(): Record<string, Fila[]> {
 
   const categorias = CATEGORIAS.map((nombre, i) => ({ id: i + 1, nombre }))
 
+  // Grupos familiares (se nombran con un apellido de la lista).
+  const familias: Fila[] = []
+  const apellidosUsados = new Set<string>()
+  while (familias.length < 18) {
+    const ap = elegir(APELLIDOS)
+    if (apellidosUsados.has(ap)) continue
+    apellidosUsados.add(ap)
+    familias.push({ idfamilia: familias.length + 1, nombre: `Familia ${ap}` })
+  }
+
+  // Viviendas ficticias: calles inventadas, una por familia (y algunas sueltas).
+  const CALLES = ['Los Ceibos', 'Del Sol', 'Las Acacias', 'Primavera', 'Los Naranjos', 'Del Río', 'San Telmo', 'La Esperanza', 'Los Álamos', 'El Mirador']
+  const viviendas: Fila[] = familias.map((f, i) => ({
+    idvivienda: i + 1,
+    direccion: `Calle ${elegir(CALLES)} ${entre(100, 2400)}, Barrio ${elegir(['Norte', 'Sur', 'Este', 'Oeste', 'Centro', 'Los Pinos'])}`,
+    idfamilia: f.idfamilia,
+  }))
+
+  const BENEFICIOS = [
+    'Bolsón alimentario', 'Subsidio de alquiler', 'Medicamentos', 'Kit escolar',
+    'Materiales de construcción', 'Pensión municipal', 'Capacitación laboral', 'Transporte social',
+  ]
+  const beneficios: Fila[] = BENEFICIOS.map((nombrebeneficio, i) => ({ id: i + 1, nombrebeneficio }))
+
+  const OCUPACIONES = ['Albañil', 'Docente', 'Empleada doméstica', 'Changarín', 'Comerciante', 'Jubilada', 'Estudiante', 'Desempleado', 'Cuidadora', 'Costurera']
+  const OBRAS = ['PAMI', 'OSEP', 'Sin obra social', 'Obra social ficticia A', 'Obra social ficticia B']
+  const ESTADOS_CIVILES = ['Soltero/a', 'Casado/a', 'Unión convivencial', 'Viudo/a', 'Separado/a']
+
   const personas: Fila[] = []
   for (let i = 1; i <= 60; i++) {
     const nombre = elegir(NOMBRES)
-    const apellido = elegir(APELLIDOS)
+    const anioNac = entre(1948, 2018)
+    const edad = 2026 - anioNac
+    const fam = i <= 54 ? familias[(i - 1) % familias.length] : null
+    // Quienes integran una familia comparten su apellido.
+    const apellido = fam ? fam.nombre.replace('Familia ', '') : elegir(APELLIDOS)
+    const sinVivienda = !fam || azar() < 0.08
     personas.push({
       idpersona: i,
       nombre,
       apellido,
-      dni: `${entre(90, 99)}.${String(entre(0, 999)).padStart(3, '0')}.${String(entre(0, 999)).padStart(3, '0')}`,
-      email: `${sinTildes(nombre)}.${sinTildes(apellido)}${i}@ejemplo.test`,
+      DNI: `${entre(90, 99)}.${String(entre(0, 999)).padStart(3, '0')}.${String(entre(0, 999)).padStart(3, '0')}`,
+      fechaNacimiento: `${anioNac}-${String(entre(1, 12)).padStart(2, '0')}-${String(entre(1, 28)).padStart(2, '0')}T00:00:00`,
+      genero: pesado(['Femenino', 'Masculino', 'Otro'], [48, 48, 4]),
+      estadoCivil: edad < 18 ? 'Soltero/a' : elegir(ESTADOS_CIVILES),
+      nacionalidad: 'Argentina',
+      provincia: 'Provincia de Ejemplo',
+      localidad: 'Municipio de Ejemplo',
+      direccion: `Calle ${elegir(CALLES)} ${entre(100, 2400)}`,
       telefono: `000-555-${String(entre(0, 9999)).padStart(4, '0')}`,
+      email: `${sinTildes(nombre)}.${sinTildes(apellido)}${i}@ejemplo.test`,
+      ocupacion: edad < 18 ? 'Estudiante' : edad >= 65 ? 'Jubilado/a' : elegir(OCUPACIONES),
+      ingresos: edad < 18 ? 'Sin ingresos' : elegir(['Sin ingresos', 'Menos de un salario mínimo', 'Un salario mínimo', 'Más de un salario mínimo']),
+      obrasocial: elegir(OBRAS),
+      idfamilia: fam ? fam.idfamilia : null,
+      idvivienda: sinVivienda ? null : viviendas.find((v) => v.idfamilia === fam!.idfamilia)!.idvivienda,
+      noPoseeVivienda: sinVivienda,
+      noPoseeDomicilio: false,
     })
   }
+
+  // Beneficios asignados a cada persona (0 a 3).
+  const beneficios_personas: Fila[] = []
+  personas.forEach((p) => {
+    const cantidad = pesado([0, 1, 2, 3], [3, 5, 3, 1])
+    const elegidos = new Set<number>()
+    while (elegidos.size < cantidad) elegidos.add(elegir(beneficios).id)
+    elegidos.forEach((idbeneficio) =>
+      beneficios_personas.push({ id: beneficios_personas.length + 1, idpersona: p.idpersona, idbeneficio }),
+    )
+  })
 
   // Incidencias repartidas en los últimos ~7 meses (más recientes, más abiertas).
   const ahora = Date.now()
@@ -143,6 +201,10 @@ export function generarDatos(): Record<string, Fila[]> {
     categorias,
     personas,
     incidencias,
+    grupofamiliar: familias,
+    vivienda: viviendas,
+    beneficios,
+    beneficios_personas,
     logs: [],
     __configuracion: [
       {

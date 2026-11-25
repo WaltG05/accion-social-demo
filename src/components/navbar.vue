@@ -59,6 +59,11 @@ export default {
           <a :href="href" @click="navigate">Dashboard</a>
         </li>
       </router-link>
+      <router-link to="/personas" custom v-slot="{ href, navigate, isActive }">
+        <li :class="{ 'link-activo': isActive }">
+          <a :href="href" @click="navigate">Personas</a>
+        </li>
+      </router-link>
       <router-link to="/incidencias" custom v-slot="{ href, navigate, isActive }">
         <li :class="{ 'link-activo': isActive }">
           <a :href="href" @click="navigate">Incidencias</a>

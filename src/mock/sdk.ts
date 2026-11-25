@@ -17,6 +17,8 @@ export const readItems = (col: string, q: Consulta = {}): Orden => ({ op: 'readI
 export const readItem = (col: string, id: any, q: Consulta = {}): Orden => ({ op: 'readItem', col, id, q })
 export const createItem = (col: string, data: Fila, q: Consulta = {}): Orden => ({ op: 'createItem', col, data, q })
 export const updateItem = (col: string, id: any, data: Fila, q: Consulta = {}): Orden => ({ op: 'updateItem', col, id, data, q })
+export const createItems = (col: string, data: Fila[], q: Consulta = {}): Orden => ({ op: 'createItems', col, data, q })
+export const deleteItems = (col: string, ids: any[]): Orden => ({ op: 'deleteItems', col, ids })
 export const deleteItem = (col: string, id: any): Orden => ({ op: 'deleteItem', col, id })
 export const readSingleton = (col: string, q: Consulta = {}): Orden => ({ op: 'readSingleton', col, q })
 export const readMe = (_q: Consulta = {}): Orden => ({ op: 'readMe' })
@@ -127,8 +129,18 @@ function ejecutar(o: Orden): any {
       if (!fila) throw new Error('No encontrado')
       return expandir(fila, o.col, q.fields)
     }
-    case 'createItem': {
+    case 'createItem':
+    case 'createItems': {
       const pk = PK[o.col] || 'id'
+      if (Array.isArray(o.data)) {
+        const creadas = o.data.map((d: Fila) => {
+          const n = { ...d, [pk]: d[pk] ?? siguienteId(o.col) }
+          coleccion(o.col).push(n)
+          return n
+        })
+        guardar()
+        return creadas.map((n: Fila) => expandir(n, o.col, q.fields))
+      }
       const nueva = { ...o.data, [pk]: o.data[pk] ?? siguienteId(o.col) }
       coleccion(o.col).push(nueva)
       guardar()
@@ -140,6 +152,16 @@ function ejecutar(o: Orden): any {
       Object.assign(fila, o.data)
       guardar()
       return expandir(fila, o.col, q.fields)
+    }
+    case 'deleteItems': {
+      const lista = coleccion(o.col)
+      const pk = PK[o.col] || 'id'
+      for (const id of o.ids) {
+        const i = lista.findIndex((f) => f[pk] == id)
+        if (i >= 0) lista.splice(i, 1)
+      }
+      guardar()
+      return null
     }
     case 'deleteItem': {
       const lista = coleccion(o.col)
@@ -166,7 +188,11 @@ function ejecutar(o: Orden): any {
 function crearCliente(): any {
   const cliente: any = {
     with: () => cliente,
-    request: async (o: Orden) => ejecutar(o),
+    // Pequeña demora, como en una red real: también evita que los avisos de "guardando..." se pisen.
+    request: async (o: Orden) => {
+      await new Promise((r) => setTimeout(r, 120))
+      return ejecutar(o)
+    },
     login: async () => ({ access_token: 'demo', refresh_token: 'demo' }),
     logout: async () => {},
     auth: { logout: async () => {} },

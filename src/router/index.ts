@@ -4,6 +4,9 @@ import { useAuth } from '@/../config/auth.js'
 import Dashboard from '../pages/Dashboard.vue'
 import Denuncias from '../pages/Denuncias.vue'
 import Login from '../pages/Login.vue'
+import Personas from '../pages/Personas.vue'
+import VerPersona from '../pages/VerPersona.vue'
+import FormularioPersona from '../components/FormularioPersona.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,6 +14,10 @@ const router = createRouter({
     { path: '/login', name: 'Login', component: Login },
     { path: '/home', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/incidencias', component: Denuncias, meta: { requiresAuth: true } },
+    { path: '/personas', component: Personas, meta: { requiresAuth: true } },
+    { path: '/personas/nueva', name: 'AgregarPersona', component: FormularioPersona, meta: { requiresAuth: true } },
+    { path: '/personas/:idpersona/editar', name: 'EditarPersona', component: FormularioPersona, meta: { requiresAuth: true } },
+    { path: '/personas/:idpersona', component: VerPersona, props: true, meta: { requiresAuth: true } },
     { path: '/', redirect: () => (useAuth().isAuthenticated.value ? '/home' : '/login') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
