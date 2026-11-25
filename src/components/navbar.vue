@@ -79,6 +79,16 @@ export default {
           <a :href="href" @click="navigate">Incidencias</a>
         </li>
       </router-link>
+      <router-link to="/reportes" custom v-slot="{ href, navigate, isActive }">
+        <li :class="{ 'link-activo': isActive }">
+          <a :href="href" @click="navigate">Reportes</a>
+        </li>
+      </router-link>
+      <router-link to="/administracion" custom v-slot="{ href, navigate, isActive }">
+        <li :class="{ 'link-activo': isActive }">
+          <a :href="href" @click="navigate">Administración</a>
+        </li>
+      </router-link>
       <li>
         <a @click="restablecer" class="logout-btn">Restablecer demo</a>
       </li>
@@ -105,7 +115,8 @@ export default {
   align-items: center;
   gap: 0.75rem; /* 12px */
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  white-space: nowrap;
 }
 .navbar-logo {
   height: 60px;
@@ -118,12 +129,13 @@ export default {
 .navbar-menu {
   list-style: none;
   display: flex;
-  gap: 1rem;
+  gap: 0.6rem;
   margin: 0;
   padding: 0;
   transition: max-height 0.5s ease;
 }
 .navbar-menu li a {
+  white-space: nowrap;
   color: white;
   text-decoration: none;
   transition: all 0.3s ease;

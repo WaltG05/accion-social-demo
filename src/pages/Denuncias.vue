@@ -625,9 +625,6 @@ function getEstadoClass(estado) {
   return estados[estado?.toLowerCase()]?.class || 'badge-secondary'
 }
 
-function getCategoriaLabel(categoria) {
-  return categorias[categoria]
-}
 
 function limpiarFiltros() {
   filtroTexto.value = ''

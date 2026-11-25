@@ -9,16 +9,18 @@ El sistema original permite registrar, clasificar y seguir incidencias sociales:
 
 **Mi parte en el proyecto original:** el backend (modelado de datos en Directus y su API) y el frontend en Vue.js, del que fui autor principal (46 de 111 commits y ~75 % del código).
 
-## Qué incluye (etapas 1 a 4)
+## Qué incluye
 - Acceso de demostración (sin contraseñas).
 - **Dashboard:** indicadores del mes frente al anterior, incidencias por mes, reparto por categoría y casos recientes.
 - **Incidencias:** alta con ubicación en el mapa, listado con búsqueda y filtros, detalle y estadísticas.
 - **Personas:** registro con búsqueda y filtro por beneficio, perfil en pasos, alta y edición con comprobante en PDF, y **Familias** (grupos familiares con su vivienda y miembros, y reporte en PDF).
 - **Viviendas:** registro con servicios, evaluaciones de condiciones habitacionales (bueno, regular o crítico) y mapa de zonas con todas las viviendas.
 - **Programas:** programas sociales ficticios con categoría, tipo y estado (pausar y activar), beneficiarios de cada uno y una pestaña de reportes con gráficos.
+- **Reportes:** indicadores y gráficos con filtros por período, categoría, estado y prioridad, e impresión y exportación a CSV o JSON.
+- **Administración:** usuarios y roles ficticios (alta, edición y baja; las contraseñas no se guardan), configuración del sistema y registro de auditoría.
 - Botón **Restablecer demo** para volver a los datos iniciales.
 
-Próximas etapas: Reportes en PDF y Administración.
+Están recreadas las pantallas activas del proyecto original (las que no estaban habilitadas, como Turnos, no se incluyen).
 
 ## Cómo funciona
 No hay servidor ni base de datos. El proyecto original consulta una API de Directus; aquí `@directus/sdk` se reemplaza (alias en `vite.config.ts`) por un simulador local, `src/mock/sdk.ts`, que responde con el mismo formato sobre datos generados por `src/mock/seed.ts` (con semilla fija) y guardados en `localStorage`. Nada sale del navegador.

@@ -22,6 +22,15 @@ export const deleteItems = (col: string, ids: any[]): Orden => ({ op: 'deleteIte
 export const deleteItem = (col: string, id: any): Orden => ({ op: 'deleteItem', col, id })
 export const readSingleton = (col: string, q: Consulta = {}): Orden => ({ op: 'readSingleton', col, q })
 export const readMe = (_q: Consulta = {}): Orden => ({ op: 'readMe' })
+export const readUsers = (q: Consulta = {}): Orden => ({ op: 'readItems', col: 'directus_users', q })
+// En la demo no se guardan contraseñas: se descartan antes de almacenar el usuario.
+const sinClave = (d: Fila): Fila => { const { password, ...resto } = d; return resto }
+export const createUser = (data: Fila): Orden => ({ op: 'createItem', col: 'directus_users', data: { ...sinClave(data), last_access: null }, q: {} })
+export const updateUser = (id: any, data: Fila): Orden => ({ op: 'updateItem', col: 'directus_users', id, data: sinClave(data), q: {} })
+export const deleteUser = (id: any): Orden => ({ op: 'deleteItem', col: 'directus_users', id })
+export const readRoles = (q: Consulta = {}): Orden => ({ op: 'readItems', col: 'directus_roles', q })
+export const updateSingleton = (col: string, data: Fila): Orden => ({ op: 'updateSingleton', col, data })
+export const refresh = () => ({})
 export const uploadFiles = (form: FormData): Orden => ({ op: 'uploadFiles', form })
 
 // ---------- Filtros ----------
@@ -180,8 +189,14 @@ function ejecutar(o: Orden): any {
       guardar()
       return null
     }
+    case 'updateSingleton': {
+      const actual = singleton(o.col)
+      Object.assign(actual, o.data)
+      guardar()
+      return actual
+    }
     case 'readSingleton':
-      return singleton(o.col)
+      return { ...singleton(o.col) }
     case 'readMe':
       return { id: 'demo', first_name: 'Admin', last_name: 'Demo', role: { name: 'Administrator' } }
     case 'uploadFiles': {

@@ -269,10 +269,58 @@ export function generarDatos(): Record<string, Fila[]> {
         coordinates: [CENTRO.lng + (azar() - 0.5) * 0.04, CENTRO.lat + (azar() - 0.5) * 0.03],
       },
       documentos: [],
+      ...(estado === 'resuelta'
+        ? {
+            fecha_resolucion: new Date(Math.min(ahora, t + entre(1, 40) * DIA)).toISOString(),
+            calificacion_satisfaccion: pesado([3, 4, 5], [2, 4, 4]),
+          }
+        : {}),
     }
   })
 
+  // Usuarios y roles del panel de administración (ficticios).
+  const directus_roles: Fila[] = [
+    { id: 'rol-admin', name: 'Administrator' },
+    { id: 'rol-general', name: 'usuario_general' },
+    { id: 'rol-lectura', name: 'visualizador' },
+  ]
+  const USUARIOS: [string, string, string, string][] = [
+    ['Admin', 'Demo', 'rol-admin', 'active'],
+    ['Rosario', 'Pérez', 'rol-general', 'active'],
+    ['Mauro', 'Lencina', 'rol-general', 'active'],
+    ['Silvana', 'Ortiz', 'rol-general', 'active'],
+    ['Hernán', 'Ibáñez', 'rol-lectura', 'active'],
+    ['Paula', 'Roldán', 'rol-lectura', 'suspended'],
+  ]
+  const directus_users: Fila[] = USUARIOS.map(([first_name, last_name, role, status], i) => ({
+    id: `usuario-${i + 1}`,
+    first_name,
+    last_name,
+    email: `${sinTildes(first_name)}.${sinTildes(last_name)}@ejemplo.test`,
+    role,
+    status,
+    last_access: new Date(Date.now() - entre(0, 20) * 24 * 3600 * 1000 - entre(0, 12) * 3600 * 1000).toISOString(),
+  }))
+
+  // Registro de actividad ficticio (últimos días).
+  const MENSAJES: [string, string][] = [
+    ['INFO', 'Se ha iniciado sesión en el sistema.'],
+    ['INFO', 'Una persona ha sido creada.'],
+    ['INFO', 'Una persona ha sido actualizada.'],
+    ['INFO', 'Se registró una nueva incidencia.'],
+    ['INFO', 'Un programa ha sido ACTIVADO.'],
+    ['INFO', 'Se actualizó una evaluación de condiciones habitacionales.'],
+    ['WARNING', 'Se superó el tiempo límite de intervención en una incidencia urgente.'],
+    ['ERROR', 'Ocurrió un error al guardar un registro (ejemplo).'],
+  ]
+  const logs: Fila[] = Array.from({ length: 30 }, (_, i) => {
+    const [nivel, mensaje] = pesado(MENSAJES, [4, 3, 3, 4, 2, 2, 1, 1])
+    return { id: i + 1, nivel, mensaje, fecha: new Date(Date.now() - i * 5 * 3600 * 1000 - entre(0, 3000) * 1000).toISOString().slice(0, 19) }
+  })
+
   return {
+    directus_roles,
+    directus_users,
     categorias,
     personas,
     incidencias,
@@ -283,7 +331,7 @@ export function generarDatos(): Record<string, Fila[]> {
     condiciones_habitacionales,
     beneficios,
     beneficios_personas,
-    logs: [],
+    logs,
     __configuracion: [
       {
         nombre_organizacion: 'Municipio de Ejemplo',
