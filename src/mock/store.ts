@@ -5,7 +5,7 @@ import { generarDatos } from './seed'
 type Fila = Record<string, any>
 export type Datos = Record<string, Fila[]>
 
-const CLAVE = 'accion-social-demo-v4'
+const CLAVE = 'accion-social-demo-v5'
 
 // Clave primaria de cada colección (como en el sistema original).
 export const PK: Record<string, string> = {
@@ -17,6 +17,9 @@ export const PK: Record<string, string> = {
   vivienda: 'idvivienda',
   beneficios: 'id',
   beneficios_personas: 'id',
+  servicios: 'id',
+  servicio_vivienda: 'id',
+  condiciones_habitacionales: 'id',
 }
 
 // Relaciones: campo -> [colección destino, clave primaria destino].
@@ -24,6 +27,20 @@ export const RELACIONES: Record<string, Record<string, [string, string]>> = {
   incidencias: {
     idpersona: ['personas', 'idpersona'],
     idcategoria: ['categorias', 'id'],
+  },
+  servicio_vivienda: {
+    servicio: ['servicios', 'id'],
+    vivienda: ['vivienda', 'idvivienda'],
+  },
+  condiciones_habitacionales: {
+    idvivienda: ['vivienda', 'idvivienda'],
+  },
+}
+
+// Relaciones uno-a-muchos: campo -> [colección hija, campo de la hija que apunta al padre].
+export const UNO_A_MUCHOS: Record<string, Record<string, [string, string]>> = {
+  vivienda: {
+    servicios: ['servicio_vivienda', 'vivienda'],
   },
 }
 

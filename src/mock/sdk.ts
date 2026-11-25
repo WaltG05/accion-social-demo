@@ -1,6 +1,6 @@
 // Reemplazo de '@directus/sdk' para la demo. Expone las mismas funciones que usa
 // la aplicación (readItems, createItem, ...) pero trabaja sobre los datos ficticios locales.
-import { PK, RELACIONES, coleccion, guardar, siguienteId, singleton } from './store'
+import { PK, RELACIONES, UNO_A_MUCHOS, coleccion, guardar, siguienteId, singleton } from './store'
 
 type Fila = Record<string, any>
 type Consulta = {
@@ -80,9 +80,17 @@ function expandir(fila: Fila, col: string, fields?: string[]): Fila {
     if (f.includes('.')) {
       const [campo, resto] = [f.split('.')[0], f.split('.').slice(1).join('.')]
       const rel = RELACIONES[col]?.[campo]
+      const hijos = UNO_A_MUCHOS[col]?.[campo]
       if (rel) {
         const destino = coleccion(rel[0]).find((x) => x[rel[1]] == fila[campo])
-        salida[campo] = destino ? expandir(destino, rel[0], resto === '*' ? ['*'] : [resto]) : null
+        const parte = destino ? expandir(destino, rel[0], resto === '*' ? ['*'] : [resto]) : null
+        // Varios subcampos de la misma relación (p. ej. 'rel.a' y 'rel.b') se fusionan.
+        salida[campo] = parte && salida[campo] && typeof salida[campo] === 'object' ? { ...salida[campo], ...parte } : parte
+      } else if (hijos) {
+        const pk = PK[col] || 'id'
+        salida[campo] = coleccion(hijos[0])
+          .filter((h) => h[hijos[1]] == fila[pk])
+          .map((h) => expandir(h, hijos[0], [resto]))
       }
     } else {
       salida[f] = fila[f]
@@ -165,8 +173,10 @@ function ejecutar(o: Orden): any {
     }
     case 'deleteItem': {
       const lista = coleccion(o.col)
-      const i = lista.findIndex((f) => f[PK[o.col] || 'id'] == o.id)
-      if (i >= 0) lista.splice(i, 1)
+      for (const id of Array.isArray(o.id) ? o.id : [o.id]) {
+        const i = lista.findIndex((f) => f[PK[o.col] || 'id'] == id)
+        if (i >= 0) lista.splice(i, 1)
+      }
       guardar()
       return null
     }

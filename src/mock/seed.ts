@@ -107,11 +107,74 @@ export function generarDatos(): Record<string, Fila[]> {
 
   // Viviendas ficticias: calles inventadas, una por familia (y algunas sueltas).
   const CALLES = ['Los Ceibos', 'Del Sol', 'Las Acacias', 'Primavera', 'Los Naranjos', 'Del Río', 'San Telmo', 'La Esperanza', 'Los Álamos', 'El Mirador']
-  const viviendas: Fila[] = familias.map((f, i) => ({
+  const TIPOS = ['Casa', 'Casa', 'Casa', 'Departamento', 'Otro']
+  const TECHOS = ['Baldosa, membrana, pizarra o teja', 'Losa o carpeta a la vista', 'Chapa de metal', 'Chapa de metal', 'Chapa de cartón, caña o paja', 'Otro material']
+  const PISOS = ['Cerámica, mosaico, madera', 'Carpeta o contrapiso', 'Carpeta o contrapiso', 'Tierra o ladrillo suelto', 'Otro material']
+  const TENENCIAS = ['Propia', 'Alquilada', 'Cedida por trabajo', 'Prestada', 'Otra situación']
+  const CALLES_ESTADO = ['Pavimentada', 'Ripio', 'Tierra', 'Tierra']
+  // 15 viviendas para las primeras 15 familias; las últimas 3 familias quedan sin vivienda cargada.
+  const viviendas: Fila[] = familias.slice(0, 15).map((f, i) => ({
     idvivienda: i + 1,
     direccion: `Calle ${elegir(CALLES)} ${entre(100, 2400)}, Barrio ${elegir(['Norte', 'Sur', 'Este', 'Oeste', 'Centro', 'Los Pinos'])}`,
+    tipoVivienda: elegir(TIPOS),
+    noPoseeVivienda: false,
+    ambientes: entre(1, 5),
+    habitantes: entre(1, 7),
+    material_techo: elegir(TECHOS),
+    material_piso: elegir(PISOS),
+    tenencia: elegir(TENENCIAS),
+    calle_estado: elegir(CALLES_ESTADO),
+    localizacion: {
+      type: 'Point',
+      coordinates: [-60.5105 + (azar() - 0.5) * 0.04, -31.7455 + (azar() - 0.5) * 0.03],
+    },
     idfamilia: f.idfamilia,
   }))
+
+  const SERVICIOS = [
+    ['Agua corriente', 'Red de agua potable'],
+    ['Electricidad', 'Conexión domiciliaria a la red'],
+    ['Gas natural', 'Red de gas'],
+    ['Cloacas', 'Conexión a red cloacal'],
+    ['Recolección de residuos', 'Servicio municipal'],
+    ['Internet', 'Conexión fija'],
+  ]
+  const servicios: Fila[] = SERVICIOS.map(([nombreServicio, observaciones], i) => ({ id: i + 1, nombreServicio, observaciones }))
+  const servicio_vivienda: Fila[] = []
+  viviendas.forEach((v) => {
+    servicios.forEach((sv) => {
+      // Los servicios básicos son más probables que internet o gas.
+      const prob = [0.9, 0.95, 0.5, 0.4, 0.85, 0.35][sv.id - 1]
+      if (azar() < prob) servicio_vivienda.push({ id: servicio_vivienda.length + 1, vivienda: v.idvivienda, servicio: sv.id })
+    })
+  })
+
+  const EVALUADORES = ['Rosario Pérez', 'Mauro Lencina', 'Silvana Ortiz', 'Hernán Ibáñez']
+  const NECESIDADES = [
+    'Reparación del techo.', 'Conexión segura a la red eléctrica.', 'Mejora del piso de la cocina.',
+    'Instalación de un tanque de agua.', 'Ampliación de un ambiente.', 'Sin necesidades urgentes.',
+  ]
+  const condiciones_habitacionales: Fila[] = []
+  viviendas.forEach((v) => {
+    const cant = entre(1, 2)
+    for (let k = 0; k < cant; k++) {
+      const estado = pesado(['bueno', 'regular', 'critico'], [5, 4, 2])
+      const dias = entre(5, 240)
+      condiciones_habitacionales.push({
+        id: condiciones_habitacionales.length + 1,
+        idvivienda: v.idvivienda,
+        estado,
+        fecha_revision: new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString().split('T')[0],
+        evaluador: elegir(EVALUADORES),
+        observaciones: estado === 'bueno' ? 'Vivienda en buen estado general.' : estado === 'regular' ? 'Presenta deterioros menores.' : 'Requiere intervención prioritaria.',
+        agua_potable: azar() < 0.85 ? 'si' : 'no',
+        electricidad: azar() < 0.95 ? 'si' : 'no',
+        gas: azar() < 0.5 ? 'si' : 'no',
+        cloacas: azar() < 0.45 ? 'si' : 'no',
+        necesidades: estado === 'bueno' ? NECESIDADES[5] : elegir(NECESIDADES.slice(0, 5)),
+      })
+    }
+  })
 
   const BENEFICIOS = [
     'Bolsón alimentario', 'Subsidio de alquiler', 'Medicamentos', 'Kit escolar',
@@ -150,8 +213,8 @@ export function generarDatos(): Record<string, Fila[]> {
       ingresos: edad < 18 ? 'Sin ingresos' : elegir(['Sin ingresos', 'Menos de un salario mínimo', 'Un salario mínimo', 'Más de un salario mínimo']),
       obrasocial: elegir(OBRAS),
       idfamilia: fam ? fam.idfamilia : null,
-      idvivienda: sinVivienda ? null : viviendas.find((v) => v.idfamilia === fam!.idfamilia)!.idvivienda,
-      noPoseeVivienda: sinVivienda,
+      idvivienda: sinVivienda ? null : (viviendas.find((v) => v.idfamilia === fam!.idfamilia)?.idvivienda ?? null),
+      noPoseeVivienda: sinVivienda || !viviendas.some((v) => v.idfamilia === fam!.idfamilia),
       noPoseeDomicilio: false,
     })
   }
@@ -203,6 +266,9 @@ export function generarDatos(): Record<string, Fila[]> {
     incidencias,
     grupofamiliar: familias,
     vivienda: viviendas,
+    servicios,
+    servicio_vivienda,
+    condiciones_habitacionales,
     beneficios,
     beneficios_personas,
     logs: [],
